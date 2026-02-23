@@ -6,27 +6,24 @@
 //
 
 import SwiftUI
-import SwiftData
 
 @main
 struct OpenBookApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
-
+    
+    @State private var isLoggedIn = false
+    @State private var currentName = ""
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            Group {
+                if isLoggedIn {
+                    HomeView(name: currentName, isLoggedIn: $isLoggedIn)
+                } else {
+                    LoginView(isLoggedIn: $isLoggedIn,
+                              currentName: $currentName)
+                }
+            }
+            .preferredColorScheme(.light)   // ✅ NOW it's on a View
         }
-        .modelContainer(sharedModelContainer)
     }
 }
