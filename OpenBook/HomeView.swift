@@ -8,7 +8,8 @@
 import SwiftUI
 
 struct HomeView: View {
-    var name: String
+    
+    @Binding var name: String
     @Binding var isLoggedIn: Bool
     
     @State private var showMenu = false
@@ -17,39 +18,111 @@ struct HomeView: View {
         
         ZStack(alignment: .topTrailing) {
             
-            // Background
-            Color(
-                red: 250/255,
-                green: 243/255,
-                blue: 224/255
-            )
-            .ignoresSafeArea()
+            // App background
+            Color(red: 250/255, green: 243/255, blue: 224/255) // #FAF3E0
+                .ignoresSafeArea()
             
-            VStack {
+            VStack(spacing: 20) {
                 
-                // Welcome Text closer to header
+                // Welcome text
                 Text("Welcome, \(name)!")
                     .font(.largeTitle)
                     .bold()
-                    .padding(.top, 20) // small padding below header
+                    .padding(.top, 20)
                     .frame(maxWidth: .infinity)
                 
-                Spacer() // keeps it centered vertically for the rest
+                ScrollView {
+                    VStack(spacing: 30) {
+                        
+                        // MARK: - Books Read Section
+                        VStack(spacing: 0) {
+                            HStack {
+                                Text("Books Read")
+                                    .font(.title2)
+                                    .bold()
+                                    .underline()
+                                
+                                Spacer()
+                                
+                                NavigationLink(destination: BooksReadView()) {
+                                    Text("View All")
+                                        .foregroundColor(.white)
+                                        .font(.subheadline)
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 4)
+                                        .background(Color.brown)
+                                        .cornerRadius(6)
+                                }
+                            }
+                            .padding()
+                            
+                            // Placeholder for book covers
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack {
+                                    // Empty for now
+                                }
+                                .padding(.horizontal)
+                            }
+                            .frame(height: 150)
+                        }
+                        .background(Color(red: 235/255, green: 213/255, blue: 195/255)) // #EBD5C3
+                        .cornerRadius(12)
+                        
+                        // MARK: - Books To Be Read Section
+                        VStack(spacing: 0) {
+                            HStack {
+                                Text("Books To Be Read")
+                                    .font(.title2)
+                                    .bold()
+                                    .underline()
+                                
+                                Spacer()
+                                
+                                NavigationLink(destination: BooksToBeReadView()) {
+                                    Text("View All")
+                                        .foregroundColor(.white)
+                                        .font(.subheadline)
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 4)
+                                        .background(Color.brown)
+                                        .cornerRadius(6)
+                                }
+                            }
+                            .padding()
+                            
+                            // Placeholder for book covers
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack {
+                                    // Empty for now
+                                }
+                                .padding(.horizontal)
+                            }
+                            .frame(height: 150)
+                        }
+                        .background(Color(red: 235/255, green: 213/255, blue: 195/255)) // #EBD5C3
+                        .cornerRadius(12)
+                        
+                    }
+                    .padding()
+                }
                 
+                Spacer()
             }
             
-            // Dropdown Menu
+            // MARK: Dropdown Menu
             if showMenu {
                 VStack(alignment: .leading, spacing: 15) {
                     
-                    Button("Search") {
-                        showMenu = false
-                        print("Search tapped")
+                    NavigationLink(destination: SearchView(name: $name, isLoggedIn: $isLoggedIn)) {
+                        Text("Search")
                     }
                     
-                    Button("Settings") {
-                        showMenu = false
-                        print("Settings tapped")
+                    NavigationLink(destination: SettingsView(name: $name, isLoggedIn: $isLoggedIn)) {
+                        Text("Settings")
+                    }
+                    
+                    NavigationLink(destination: ReadTimeTrackerView(name: $name, isLoggedIn: $isLoggedIn)) {
+                        Text("Read Time Tracker")
                     }
                     
                     Divider()
@@ -59,57 +132,29 @@ struct HomeView: View {
                         isLoggedIn = false
                     }
                     .foregroundColor(.red)
-                    
                 }
                 .padding()
-                .background(Color(
-                    red: 235/255,
-                    green: 213/255,
-                    blue: 195/255
-                ))
+                .background(Color(red: 250/255, green: 243/255, blue: 224/255)) // #FAF3E0
                 .cornerRadius(12)
                 .shadow(radius: 5)
-                .frame(width: 150)
+                .frame(width: 180)
                 .padding(.trailing, 10)
-                .padding(.top, 10) // right under hamburger
-                .transition(.move(edge: .top).combined(with: .opacity))
+                .padding(.top, 10)
                 .zIndex(1)
             }
         }
         
-        // Header
-        .safeAreaInset(edge: .top) {
-            HStack {
-                
-                Text("OpenBook")
-                    .font(.largeTitle)
-                    .foregroundColor(.white)
-                    .bold()
-                
-                Spacer()
-                
-                Button {
-                    withAnimation(.spring()) {
-                        showMenu.toggle()
-                    }
-                } label: {
-                    Image(systemName: "line.3.horizontal")
-                        .font(.title2)
-                        .foregroundColor(.white)
-                }
-            }
-            .padding()
-            .background(Color(
-                red: 62.0/255.0,
-                green: 39.0/255.0,
-                blue: 35.0/255.0))
-        }
         
+        // MARK: Header
+        .safeAreaInset(edge: .top) {
+            HeaderView(title: "OpenBook", showMenu: $showMenu, isLoggedIn: $isLoggedIn)
+        }
         .navigationBarBackButtonHidden(true)
     }
 }
 
 #Preview {
-    HomeView(name: "Tommy",
-             isLoggedIn: .constant(true))
+    NavigationStack {
+        HomeView(name: .constant("Tommy"), isLoggedIn: .constant(true))
+    }
 }

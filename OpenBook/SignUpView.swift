@@ -49,7 +49,7 @@ struct SignUpView: View {
                         .font(.largeTitle)
                         .bold()
                     
-                    TextField("Full Name", text: $name)
+                    TextField("Display Name", text: $name)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding(.horizontal)
                     

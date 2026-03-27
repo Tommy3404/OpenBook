@@ -15,15 +15,20 @@ struct OpenBookApp: App {
     
     var body: some Scene {
         WindowGroup {
-            Group {
-                if isLoggedIn {
-                    HomeView(name: currentName, isLoggedIn: $isLoggedIn)
-                } else {
-                    LoginView(isLoggedIn: $isLoggedIn,
-                              currentName: $currentName)
+            
+            NavigationStack {   
+                
+                Group {
+                    if isLoggedIn {
+                        HomeView(name: $currentName,
+                                 isLoggedIn: $isLoggedIn)
+                    } else {
+                        LoginView(isLoggedIn: $isLoggedIn,
+                                  currentName: $currentName)
+                    }
                 }
             }
-            .preferredColorScheme(.light)   // ✅ NOW it's on a View
+            .preferredColorScheme(.light)
         }
     }
 }
