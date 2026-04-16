@@ -70,9 +70,9 @@ struct ReadTimeTrackerView: View {
                     // ✅ SPACE ADDED FOR HEADER
                     Spacer().frame(height: 70)
                     
-                    Text("Read Time Tracker Page")
-                        .font(.title2)
-                        .foregroundColor(primaryColor)
+//                    Text("Read Time Tracker Page")
+//                        .font(.title2)
+//                        .foregroundColor(primaryColor)
                     
                     // MARK: - Book Title Input
                     VStack(alignment: .leading, spacing: 8) {
