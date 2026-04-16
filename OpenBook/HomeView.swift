@@ -2,30 +2,41 @@
 //  HomeView.swift
 //  OpenBook
 //
-//  Created by Tommy McClure on 2/23/26.
-//
 
 import SwiftUI
+import ClerkKit
 
 struct HomeView: View {
     
     @Binding var name: String
     @Binding var isLoggedIn: Bool
     
+    var updateName: (String) -> Void
+    
     @State private var showMenu = false
+    @State private var booksRead: [Book] = []
+    @State private var booksToRead: [Book] = []
+    
+    private let backgroundColor = Color(red: 250/255, green: 243/255, blue: 224/255)
+    private let sectionColor = Color(red: 235/255, green: 213/255, blue: 195/255)
+    
+    private let allBooks: [Book] = [
+        Book(title: "To Kill a Mockingbird", rating: 4.8, coverImage: "mockingbird"),
+        Book(title: "Ready Player One", rating: 4.6, coverImage: "ReadyPlayerOne"),
+        Book(title: "The Great Gatsby", rating: 4.4, coverImage: "GreatGatsby"),
+        Book(title: "IT", rating: 4.5, coverImage: "IT")
+    ]
     
     var body: some View {
         
-        ZStack(alignment: .topTrailing) {
+        ZStack {
             
-            // App background
-            Color(red: 250/255, green: 243/255, blue: 224/255) // #FAF3E0
+            backgroundColor
                 .ignoresSafeArea()
             
             VStack(spacing: 20) {
                 
-                // Welcome text
-                Text("Welcome, \(name)!")
+                Text("Welcome, \(displayName)!")
                     .font(.largeTitle)
                     .bold()
                     .padding(.top, 20)
@@ -34,127 +45,116 @@ struct HomeView: View {
                 ScrollView {
                     VStack(spacing: 30) {
                         
-                        // MARK: - Books Read Section
-                        VStack(spacing: 0) {
-                            HStack {
-                                Text("Books Read")
-                                    .font(.title2)
-                                    .bold()
-                                    .underline()
-                                
-                                Spacer()
-                                
-                                NavigationLink(destination: BooksReadView()) {
-                                    Text("View All")
-                                        .foregroundColor(.white)
-                                        .font(.subheadline)
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 4)
-                                        .background(Color.brown)
-                                        .cornerRadius(6)
-                                }
-                            }
-                            .padding()
-                            
-                            // Placeholder for book covers
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack {
-                                    // Empty for now
-                                }
-                                .padding(.horizontal)
-                            }
-                            .frame(height: 150)
-                        }
-                        .background(Color(red: 235/255, green: 213/255, blue: 195/255)) // #EBD5C3
-                        .cornerRadius(12)
+                        sectionView(
+                            title: "Books Read",
+                            books: booksRead,
+                            destination: BooksReadView()
+                        )
                         
-                        // MARK: - Books To Be Read Section
-                        VStack(spacing: 0) {
-                            HStack {
-                                Text("Books To Be Read")
-                                    .font(.title2)
-                                    .bold()
-                                    .underline()
-                                
-                                Spacer()
-                                
-                                NavigationLink(destination: BooksToBeReadView()) {
-                                    Text("View All")
-                                        .foregroundColor(.white)
-                                        .font(.subheadline)
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 4)
-                                        .background(Color.brown)
-                                        .cornerRadius(6)
-                                }
-                            }
-                            .padding()
-                            
-                            // Placeholder for book covers
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack {
-                                    // Empty for now
-                                }
-                                .padding(.horizontal)
-                            }
-                            .frame(height: 150)
-                        }
-                        .background(Color(red: 235/255, green: 213/255, blue: 195/255)) // #EBD5C3
-                        .cornerRadius(12)
-                        
+                        sectionView(
+                            title: "Books To Be Read",
+                            books: booksToRead,
+                            destination: BooksToBeReadView()
+                        )
                     }
                     .padding()
                 }
                 
                 Spacer()
             }
-            
-            // MARK: Dropdown Menu
-            if showMenu {
-                VStack(alignment: .leading, spacing: 15) {
-                    
-                    NavigationLink(destination: SearchView(name: $name, isLoggedIn: $isLoggedIn)) {
-                        Text("Search")
-                    }
-                    
-                    NavigationLink(destination: SettingsView(name: $name, isLoggedIn: $isLoggedIn)) {
-                        Text("Settings")
-                    }
-                    
-                    NavigationLink(destination: ReadTimeTrackerView(name: $name, isLoggedIn: $isLoggedIn)) {
-                        Text("Read Time Tracker")
-                    }
-                    
-                    Divider()
-                    
-                    Button("Logout") {
-                        showMenu = false
-                        isLoggedIn = false
-                    }
-                    .foregroundColor(.red)
-                }
-                .padding()
-                .background(Color(red: 250/255, green: 243/255, blue: 224/255)) // #FAF3E0
-                .cornerRadius(12)
-                .shadow(radius: 5)
-                .frame(width: 180)
-                .padding(.trailing, 10)
-                .padding(.top, 10)
-                .zIndex(1)
-            }
         }
         
-        
-        // MARK: Header
         .safeAreaInset(edge: .top) {
-            HeaderView(title: "OpenBook", showMenu: $showMenu, isLoggedIn: $isLoggedIn)
+            HeaderView(
+                title: "OpenBook",
+                currentPage: "Home",
+                showMenu: $showMenu,
+                isLoggedIn: $isLoggedIn,
+                updateName: updateName
+            )
         }
         .navigationBarBackButtonHidden(true)
+        
+        .onAppear {
+            loadBooks()
+            name = UserDefaults.standard.string(forKey: "displayName") ?? "User"
+        }
+    }
+    
+    private var displayName: String {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "User" : trimmed
+    }
+    
+    private func sectionView<Destination: View>(
+        title: String,
+        books: [Book],
+        destination: Destination
+    ) -> some View {
+        
+        VStack(spacing: 0) {
+            
+            HStack {
+                Text(title)
+                    .font(.title2)
+                    .bold()
+                    .underline()
+                
+                Spacer()
+                
+                NavigationLink(destination: destination) {
+                    Text("View All")
+                        .foregroundColor(.white)
+                        .font(.subheadline)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(Color.brown)
+                        .cornerRadius(6)
+                }
+            }
+            .padding()
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    
+                    if books.isEmpty {
+                        Text("No books yet")
+                            .foregroundColor(.gray)
+                            .padding(.leading)
+                    } else {
+                        ForEach(books) {
+                            Image($0.coverImage)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 70, height: 110)
+                                .cornerRadius(8)
+                                .shadow(radius: 3)
+                        }
+                    }
+                }
+                .padding(.horizontal)
+            }
+            .frame(height: 140)
+        }
+        .background(sectionColor)
+        .cornerRadius(12)
+    }
+    
+    private func loadBooks() {
+        let readTitles = UserDefaults.standard.stringArray(forKey: "BooksReadList") ?? []
+        let tbrTitles = UserDefaults.standard.stringArray(forKey: "ToBeReadList") ?? []
+        
+        booksRead = allBooks.filter { readTitles.contains($0.title) }
+        booksToRead = allBooks.filter { tbrTitles.contains($0.title) }
     }
 }
 
 #Preview {
     NavigationStack {
-        HomeView(name: .constant("Tommy"), isLoggedIn: .constant(true))
+        HomeView(
+            name: .constant("User"),
+            isLoggedIn: .constant(true),
+            updateName: { _ in }
+        )
     }
 }

@@ -2,47 +2,39 @@
 //  LoginView.swift
 //  OpenBook
 //
-//  Created by Tommy McClure on 2/23/26.
-//
 
 import SwiftUI
+import ClerkKit
+import ClerkKitUI
 
 struct LoginView: View {
     
     @Binding var isLoggedIn: Bool
     @Binding var currentName: String
     
-    @State private var username = ""
-    @State private var password = ""
+    @State private var showAuth = false
     @State private var showError = false
-    
-    @State private var users: [String: (name: String, password: String)] = [:]
+    @State private var isLoggingIn = false
     
     var body: some View {
         
-        NavigationStack {   // 👈 ADD THIS
-            
+        NavigationStack {
             ZStack {
                 
-                Color(
-                    red: 250/255,
-                    green: 243/255,
-                    blue: 224/255
-                )
-                .ignoresSafeArea()
+                // Background
+                Color(red: 250/255, green: 243/255, blue: 224/255)
+                    .ignoresSafeArea()
                 
-                VStack {
+                VStack(spacing: 20) {
                     
+                    // App Title
                     Text("OpenBook")
                         .font(.largeTitle)
                         .foregroundColor(.white)
                         .bold()
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color(
-                            red: 62.0/255.0,
-                            green: 39.0/255.0,
-                            blue: 35.0/255.0))
+                        .background(Color(red: 62/255, green: 39/255, blue: 35/255))
                     
                     Spacer()
                     
@@ -52,63 +44,69 @@ struct LoginView: View {
                             .font(.largeTitle)
                             .bold()
                         
-                        TextField("Username", text: $username)
-                            .autocapitalization(.none)
-                            .disableAutocorrection(true)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .padding(.horizontal)
-                        
-                        SecureField("Password", text: $password)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .padding(.horizontal)
-                        
-                        Button("Login") {
-                            loginUser()
+                        // LOGIN BUTTON ONLY (NO AUTO LOGIN)
+                        Button(action: {
+                            showAuth = true
+                        }) {
+                            if isLoggingIn {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                            } else {
+                                Text("Continue with Clerk")
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                            }
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color(
-                            red: 62.0/255.0,
-                            green: 39.0/255.0,
-                            blue: 35.0/255.0))
+                        .background(Color(red: 62/255, green: 39/255, blue: 35/255))
                         .foregroundColor(.white)
                         .cornerRadius(10)
                         .padding(.horizontal)
+                        .disabled(isLoggingIn)
                         
                         if showError {
-                            Text("Invalid username or password")
+                            Text("Authentication failed. Please try again.")
                                 .foregroundColor(.red)
                         }
-                        
-                        NavigationLink("Don't have an account? Sign Up") {
-                            SignUpView(users: $users)
-                        }
-                        .padding(.top)
                     }
                     
                     Spacer()
                 }
             }
-            .navigationBarHidden(true)   // optional, keeps it clean
+            .navigationBarHidden(true)
+            
+            // MARK: AUTH FLOW (MANUAL ONLY)
+            .fullScreenCover(isPresented: $showAuth) {
+                AuthView()
+                    .onDisappear {
+                        handleManualLogin()
+                    }
+            }
         }
-    
     }
     
-    func loginUser() {
-        if let user = users[username],
-           user.password == password {
+    // MARK: - MANUAL LOGIN ONLY
+    private func handleManualLogin() {
+        if let user = Clerk.shared.user {
             
-            currentName = user.name   // ✅ pass name upward
-            isLoggedIn = true         // ✅ switch root view
+            currentName = user.firstName ?? "User"
+            isLoggedIn = true
             showError = false
             
         } else {
+            
+            // IMPORTANT: do NOT auto-login or fallback
+            isLoggedIn = false
             showError = true
         }
     }
 }
 
 #Preview {
-    LoginView(isLoggedIn: .constant(false),
-              currentName: .constant(""))
+    LoginView(
+        isLoggedIn: .constant(false),
+        currentName: .constant("")
+    )
+    .environment(Clerk.shared)
 }
